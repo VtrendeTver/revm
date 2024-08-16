@@ -66,12 +66,12 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn code_hash(&mut self, __address: Address) -> Option<(B256, bool)> {
+    fn code_hash(&mut self, _address: Address) -> Option<(B256, bool)> {
         Some((KECCAK_EMPTY, false))
     }
 
     #[inline]
-    fn sload(&mut self, __address: Address, index: U256) -> Option<(U256, bool)> {
+    fn sload(&mut self, _address: Address, index: U256) -> Option<(U256, bool)> {
         match self.storage.entry(index) {
             Entry::Occupied(entry) => Some((*entry.get(), false)),
             Entry::Vacant(entry) => {
@@ -83,7 +83,7 @@ impl Host for DummyHost {
 
     #[inline]
     fn sstore(&mut self, _address: Address, index: U256, value: U256) -> Option<SStoreResult> {
-        let (present, is_cold) = match self.storage.entry(index) {
+        let (original_value, is_cold) = match self.storage.entry(index) {
             Entry::Occupied(mut entry) => (entry.insert(value), false),
             Entry::Vacant(entry) => {
                 entry.insert(value);
@@ -92,8 +92,8 @@ impl Host for DummyHost {
         };
 
         Some(SStoreResult {
-            original_value: U256::ZERO,
-            present_value: present,
+            original_value,
+            present_value: self.storage[&index],
             new_value: value,
             is_cold,
         })
